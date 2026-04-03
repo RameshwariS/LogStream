@@ -1,0 +1,15 @@
+# Go build outputs and tooling
+/bin/
+/vendor/
+
+# Environment
+.env
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Test / Coverage
+*.test
+coverage.out

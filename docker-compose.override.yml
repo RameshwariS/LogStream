@@ -1,0 +1,17 @@
+# docker-compose.override.yml — local dev overrides
+# Automatically picked up by `docker compose up`
+version: '3.9'
+
+services:
+  backend:
+    # Mount source for quick iteration (requires air or go run)
+    volumes:
+      - ./backend:/app
+    environment:
+      - PORT=8080
+      - JWT_SECRET=dev-secret
+      - API_KEY=dev-api-key
+
+  frontend:
+    # For local dev, run `npm run dev` directly instead of the Docker container
+    profiles: ["prod"]
