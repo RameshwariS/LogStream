@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+  # ── Grafana Loki — log storage ───────────────────────────────────────────────
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: logstream-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki-config.yml:/etc/loki/loki-config.yml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logstream
+
+  # ── Promtail — log scraping agent ───────────────────────────────────────────
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: logstream-promtail
+    volumes:
+      - ./config/promtail-config.yml:/etc/promtail/config.yml
+      - log-data:/logs:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      - logstream
+
+  # ── Dummy app 1: JSON logger ─────────────────────────────────────────────────
+  json-app:
+    build: ./apps/json-logger
+    container_name: logstream-json-app
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/json-app.log
+    networks:
+      - logstream
+
+  # ── Dummy app 2: Syslog logger ───────────────────────────────────────────────
+  syslog-app:
+    build: ./apps/syslog-logger
+    container_name: logstream-syslog-app
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/syslog-app.log
+    networks:
+      - logstream
+
+  # ── Dummy app 3: Plain-text logger ───────────────────────────────────────────
+  text-app:
+    build: ./apps/text-logger
+    container_name: logstream-text-app
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/text-app.log
+    networks:
+      - logstream
+
+  # ── Backend — Node.js + Socket.io server ────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: logstream-backend
+    ports:
+      - "4000:4000"
+    env_file: ./backend/.env
+    depends_on:
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - logstream
+
+  # ── Frontend — React + Vite dev server ──────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: logstream-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - logstream
+
+volumes:
+  loki-data:
+  log-data:
+
+networks:
+  logstream:
+    driver: bridge
