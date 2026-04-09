@@ -1,0 +1,38 @@
+{
+  "title": "LogStream Overview",
+  "uid": "logstream-overview",
+  "version": 1,
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "logs", "title": "All Logs — Live Tail",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 12 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{
+        "expr": "{job=\"logstream\"}",
+        "refId": "A"
+      }],
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showTime": true, "wrapLogMessage": false }
+    },
+    {
+      "id": 2, "type": "logs", "title": "ERROR Logs Only",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{
+        "expr": "{job=\"logstream\", level=\"ERROR\"}",
+        "refId": "A"
+      }]
+    },
+    {
+      "id": 3, "type": "logs", "title": "WARN Logs Only",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{
+        "expr": "{job=\"logstream\", level=\"WARN\"}",
+        "refId": "A"
+      }]
+    }
+  ]
+}
