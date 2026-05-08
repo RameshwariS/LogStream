@@ -17,21 +17,40 @@
 ## Architecture
 
 ```
-[json-app] ──┐
-[syslog-app] ┼──► Promtail ──► Grafana Loki ──► Node.js + Socket.io ──► React Dashboard
-[text-app]  ──┘       (scrape)     (store)          (tail + broadcast)   (live UI)
+[api-gateway]          ──┐
+[auth-service]         ──┤
+[payment-service]      ──┤
+[order-service]        ──┼──► Promtail ──► Grafana Loki ──► Node.js + Socket.io ──► React Dashboard
+[inventory-service]    ──┤       (scrape)     (store)          (tail + broadcast)   (live UI)
+[notification-service] ──┤
+[analytics-service]    ──┤
+[json-app]             ──┤  (legacy dummy apps still included)
+[syslog-app]           ──┤
+[text-app]             ──┘
 ```
 
 Five layers, all containerized via Docker Compose:
 
 | Layer | Technology | Port |
 |-------|-----------|------|
-| Log generators | Node.js (3 dummy apps) | — |
+| Log generators | Node.js (10 services — 3 dummy + 7 real-time) | — |
 | Log scraping | Grafana Promtail 2.9 | — |
 | Log storage | Grafana Loki 2.9 | 3100 |
 | Backend | Node.js + Express + Socket.io | 4000 |
 | Frontend | React 18 + Tailwind CSS (nginx) | 5173 |
 | Dashboards | Grafana 10 (optional) | 3000 |
+
+### Real-Time Application Services
+
+| Service | Log Format | What it simulates |
+|---------|-----------|-------------------|
+| `api-gateway` | JSON | HTTP request routing — method, path, status, latency, trace IDs |
+| `auth-service` | JSON | Login, logout, MFA, JWT errors, account lockouts |
+| `payment-service` | JSON | Stripe-style transactions, refunds, fraud detection |
+| `order-service` | Plain-text | Order lifecycle: created → paid → shipped → delivered |
+| `inventory-service` | Syslog | Stock management, warehouse transfers, low-stock alerts |
+| `notification-service` | JSON | Email/SMS/push delivery, bounces, retries via Twilio/SendGrid |
+| `analytics-service` | JSON | Kafka ingestion, funnel aggregation, ML scoring, A/B tests |
 
 ---
 
@@ -112,6 +131,13 @@ npm run dev
 ```
 logstream/
 ├── apps/
+│   ├── api-gateway/          # Real-time app — HTTP gateway logs (JSON)
+│   ├── auth-service/         # Real-time app — Auth/login events (JSON)
+│   ├── payment-service/      # Real-time app — Payment processing (JSON)
+│   ├── order-service/        # Real-time app — Order lifecycle (plain-text)
+│   ├── inventory-service/    # Real-time app — Stock management (syslog)
+│   ├── notification-service/ # Real-time app — Email/SMS/push delivery (JSON)
+│   ├── analytics-service/    # Real-time app — Kafka pipeline & ML scoring (JSON)
 │   ├── json-logger/          # Dummy app 1 — JSON format logs
 │   ├── syslog-logger/        # Dummy app 2 — RFC 3164 syslog logs
 │   └── text-logger/          # Dummy app 3 — plain-text logs

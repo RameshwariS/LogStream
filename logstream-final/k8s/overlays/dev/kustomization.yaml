@@ -1,0 +1,94 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ── Dev overlay — for local Minikube / Kind clusters ──────────────────────────
+# Differences from base:
+#   - Single replica for all deployments (save resources)
+#   - NodePort services for easy localhost access without an Ingress Controller
+#   - imagePullPolicy: Never (uses locally built images)
+#   - Reduced resource limits
+
+namespace: logstream
+
+resources:
+  - ../../base
+
+patches:
+  # ── Scale everything to 1 replica in dev ──────────────────────────────────
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: backend
+        namespace: logstream
+      spec:
+        replicas: 1
+    target:
+      kind: Deployment
+      name: backend
+
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: frontend
+        namespace: logstream
+      spec:
+        replicas: 1
+    target:
+      kind: Deployment
+      name: frontend
+
+  # ── Expose frontend as NodePort for minikube service --url ─────────────────
+  - patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: frontend
+        namespace: logstream
+      spec:
+        type: NodePort
+        ports:
+          - name: http
+            port: 80
+            targetPort: http
+            nodePort: 30080
+    target:
+      kind: Service
+      name: frontend
+
+  # ── Expose backend as NodePort ─────────────────────────────────────────────
+  - patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: backend
+        namespace: logstream
+      spec:
+        type: NodePort
+        ports:
+          - name: http
+            port: 4000
+            targetPort: http
+            nodePort: 30400
+    target:
+      kind: Service
+      name: backend
+
+  # ── Expose Grafana as NodePort ─────────────────────────────────────────────
+  - patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: grafana
+        namespace: logstream
+      spec:
+        type: NodePort
+        ports:
+          - name: http
+            port: 3000
+            targetPort: http
+            nodePort: 30300
+    target:
+      kind: Service
+      name: grafana

@@ -1,0 +1,98 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ingress — routes all external traffic into the cluster
+#
+# Path routing:
+#   /           → frontend (React SPA)
+#   /api/*      → backend (REST API)
+#   /socket.io  → backend (Socket.io — WebSocket upgrade)
+#   /grafana    → grafana (optional dashboard)
+#
+# Requirements:
+#   - nginx Ingress Controller installed (kubectl apply -f ingress-nginx)
+#   - For local dev: set host to logstream.local and add to /etc/hosts
+#
+# TLS (optional, uncomment the tls block and create a Secret):
+#   kubectl create secret tls logstream-tls \
+#     --cert=cert.pem --key=key.pem -n logstream
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logstream-ingress
+  namespace: logstream
+  labels:
+    app.kubernetes.io/part-of: logstream
+  annotations:
+    # nginx Ingress Controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+
+    # WebSocket support for Socket.io
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"  # sticky sessions
+
+    # Proxy buffer settings for SSE / WebSocket
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+
+    # Large body for log uploads
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+
+spec:
+  ingressClassName: nginx
+
+  # ── TLS (uncomment for HTTPS) ──────────────────────────────────────────────
+  # tls:
+  #   - hosts:
+  #       - logstream.local
+  #     secretName: logstream-tls
+
+  rules:
+    - host: logstream.local     # change to your domain in production
+      http:
+        paths:
+          # ── Frontend (catch-all — must come last) ──────────────────────────
+          - path: /()(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  name: http
+
+          # ── Backend REST API ───────────────────────────────────────────────
+          - path: /api(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  name: http
+
+          # ── Socket.io (WebSocket) ──────────────────────────────────────────
+          - path: /socket.io(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  name: http
+
+          # ── Health check (backend) ─────────────────────────────────────────
+          - path: /health(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  name: http
+
+          # ── Grafana ────────────────────────────────────────────────────────
+          - path: /grafana(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  name: http

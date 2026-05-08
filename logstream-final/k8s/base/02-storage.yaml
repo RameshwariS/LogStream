@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PersistentVolumeClaim: Loki data storage
+# Stores Loki chunks, index, and compactor state.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-data
+  namespace: logstream
+  labels:
+    app: loki
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # storageClassName: standard   # uncomment and set for specific storage class
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# PersistentVolumeClaim: Shared log files
+# Dummy apps write here; Promtail reads from here.
+# ReadWriteMany is required so multiple pods can mount the same volume.
+# On cloud providers use: EFS (AWS), Filestore (GCP), Azure Files.
+# For local Minikube/Kind use: hostPath or local-path provisioner.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: log-data
+  namespace: logstream
+  labels:
+    component: log-pipeline
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  # storageClassName: efs-sc    # AWS EFS example
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# PersistentVolumeClaim: Grafana data
+# Stores Grafana state (users, alerts, dashboard changes).
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data
+  namespace: logstream
+  labels:
+    app: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

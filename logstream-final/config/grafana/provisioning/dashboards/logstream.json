@@ -1,38 +1,98 @@
 {
   "title": "LogStream Overview",
   "uid": "logstream-overview",
-  "version": 1,
+  "version": 2,
   "schemaVersion": 38,
   "refresh": "5s",
   "time": { "from": "now-1h", "to": "now" },
   "panels": [
     {
       "id": 1, "type": "logs", "title": "All Logs — Live Tail",
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 12 },
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 10 },
       "datasource": { "type": "loki", "uid": "-- Grafana --" },
-      "targets": [{
-        "expr": "{job=\"logstream\"}",
-        "refId": "A"
-      }],
+      "targets": [{ "expr": "{job=\"logstream\"}", "refId": "A" }],
       "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showTime": true, "wrapLogMessage": false }
     },
     {
       "id": 2, "type": "logs", "title": "ERROR Logs Only",
-      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
       "datasource": { "type": "loki", "uid": "-- Grafana --" },
-      "targets": [{
-        "expr": "{job=\"logstream\", level=\"ERROR\"}",
-        "refId": "A"
-      }]
+      "targets": [{ "expr": "{job=\"logstream\", level=\"ERROR\"}", "refId": "A" }]
     },
     {
       "id": 3, "type": "logs", "title": "WARN Logs Only",
-      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 8 },
       "datasource": { "type": "loki", "uid": "-- Grafana --" },
-      "targets": [{
-        "expr": "{job=\"logstream\", level=\"WARN\"}",
-        "refId": "A"
-      }]
+      "targets": [{ "expr": "{job=\"logstream\", level=\"WARN\"}", "refId": "A" }]
+    },
+    {
+      "id": 10, "type": "logs", "title": "API Gateway — Live",
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"api-gateway\"}", "refId": "A" }],
+      "options": { "enableLogDetails": true, "showTime": true }
+    },
+    {
+      "id": 11, "type": "logs", "title": "API Gateway — Errors & 5xx",
+      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"api-gateway\", level=\"ERROR\"}", "refId": "A" }]
+    },
+    {
+      "id": 20, "type": "logs", "title": "Notification Service — Live",
+      "gridPos": { "x": 0, "y": 26, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"notification-service\"}", "refId": "A" }],
+      "options": { "enableLogDetails": true, "showTime": true }
+    },
+    {
+      "id": 21, "type": "logs", "title": "Notification Delivery Failures",
+      "gridPos": { "x": 12, "y": 26, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"notification-service\", level=~\"ERROR|WARN\"}", "refId": "A" }]
+    },
+    {
+      "id": 30, "type": "logs", "title": "Analytics Service — Pipeline Events",
+      "gridPos": { "x": 0, "y": 34, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"analytics-service\"}", "refId": "A" }],
+      "options": { "enableLogDetails": true, "showTime": true }
+    },
+    {
+      "id": 31, "type": "logs", "title": "Analytics — Errors & Lag Alerts",
+      "gridPos": { "x": 12, "y": 34, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"analytics-service\", level=~\"ERROR|WARN\"}", "refId": "A" }]
+    },
+    {
+      "id": 40, "type": "logs", "title": "Auth Service",
+      "gridPos": { "x": 0, "y": 42, "w": 8, "h": 7 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"auth-service\"}", "refId": "A" }]
+    },
+    {
+      "id": 41, "type": "logs", "title": "Payment Service",
+      "gridPos": { "x": 8, "y": 42, "w": 8, "h": 7 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"payment-service\"}", "refId": "A" }]
+    },
+    {
+      "id": 42, "type": "logs", "title": "Order Service",
+      "gridPos": { "x": 16, "y": 42, "w": 8, "h": 7 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"order-service\"}", "refId": "A" }]
+    },
+    {
+      "id": 43, "type": "logs", "title": "Inventory Service",
+      "gridPos": { "x": 0, "y": 49, "w": 12, "h": 7 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\", app=\"inventory-service\"}", "refId": "A" }]
+    },
+    {
+      "id": 44, "type": "logs", "title": "Security Alerts — All Services",
+      "gridPos": { "x": 12, "y": 49, "w": 12, "h": 7 },
+      "datasource": { "type": "loki", "uid": "-- Grafana --" },
+      "targets": [{ "expr": "{job=\"logstream\"} |~ \"(?i)(fraud|blocked|locked|denied|unauthorized|403|401|quota_exceeded)\"", "refId": "A" }]
     }
   ]
 }

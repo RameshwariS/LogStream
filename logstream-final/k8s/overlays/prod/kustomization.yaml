@@ -1,0 +1,76 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ── Production overlay ────────────────────────────────────────────────────────
+# Differences from base:
+#   - Production image tags (replace :latest with digest or semver)
+#   - 3 replicas for backend and frontend
+#   - Real domain in Ingress
+#   - TLS Secret reference
+
+namespace: logstream
+
+resources:
+  - ../../base
+
+# ── Image tags — set your registry and tag ────────────────────────────────────
+images:
+  - name: logstream-backend
+    newName: ghcr.io/YOUR_ORG/logstream-backend
+    newTag: "1.0.0"
+  - name: logstream-frontend
+    newName: ghcr.io/YOUR_ORG/logstream-frontend
+    newTag: "1.0.0"
+  - name: logstream-json-app
+    newName: ghcr.io/YOUR_ORG/logstream-json-app
+    newTag: "1.0.0"
+  - name: logstream-syslog-app
+    newName: ghcr.io/YOUR_ORG/logstream-syslog-app
+    newTag: "1.0.0"
+  - name: logstream-text-app
+    newName: ghcr.io/YOUR_ORG/logstream-text-app
+    newTag: "1.0.0"
+
+patches:
+  # ── 3 replicas in production ───────────────────────────────────────────────
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: backend
+        namespace: logstream
+      spec:
+        replicas: 3
+    target:
+      kind: Deployment
+      name: backend
+
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: frontend
+        namespace: logstream
+      spec:
+        replicas: 3
+    target:
+      kind: Deployment
+      name: frontend
+
+  # ── Real domain + TLS in Ingress ───────────────────────────────────────────
+  - patch: |-
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: logstream-ingress
+        namespace: logstream
+      spec:
+        tls:
+          - hosts:
+              - logstream.yourdomain.com
+            secretName: logstream-tls
+        rules:
+          - host: logstream.yourdomain.com
+    target:
+      kind: Ingress
+      name: logstream-ingress

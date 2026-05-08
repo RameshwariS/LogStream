@@ -1,0 +1,129 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ServiceAccount + RBAC for Promtail
+# Promtail needs to list/watch Pods to enrich logs with k8s metadata labels.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promtail
+  namespace: logstream
+  labels:
+    app: promtail
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: logstream-promtail
+  labels:
+    app: promtail
+rules:
+  - apiGroups: [""]
+    resources: [nodes, nodes/proxy, services, endpoints, pods]
+    verbs: [get, list, watch]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logstream-promtail
+  labels:
+    app: promtail
+subjects:
+  - kind: ServiceAccount
+    name: promtail
+    namespace: logstream
+roleRef:
+  kind: ClusterRole
+  name: logstream-promtail
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Promtail — log scraping agent
+#
+# Deployed as a regular Deployment (not DaemonSet) because we are scraping
+# specific files on a shared PVC written by our dummy apps — not the host's
+# /var/log. A DaemonSet would make sense if scraping container stdout from
+# /var/log/pods, which is a natural extension for phase 2.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promtail
+  namespace: logstream
+  labels:
+    app: promtail
+    app.kubernetes.io/name: promtail
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+      annotations:
+        # Force pod restart when config changes
+        checksum/config: "promtail-config-v1"
+    spec:
+      serviceAccountName: promtail
+
+      # Wait for Loki to be healthy before starting
+      initContainers:
+        - name: wait-for-loki
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until wget -qO- http://loki:3100/ready; do
+                echo "Waiting for Loki..."; sleep 5;
+              done
+              echo "Loki is ready."
+
+      containers:
+        - name: promtail
+          image: grafana/promtail:2.9.0
+          args:
+            - -config.file=/etc/promtail/config.yml
+
+          ports:
+            - name: http
+              containerPort: 9080
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail
+            - name: logs
+              mountPath: /logs
+              readOnly: true
+            - name: positions
+              mountPath: /tmp
+
+      volumes:
+        - name: config
+          configMap:
+            name: promtail-config
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data
+        - name: positions
+          emptyDir: {}

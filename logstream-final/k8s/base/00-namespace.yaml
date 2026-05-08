@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logstream
+  labels:
+    app.kubernetes.io/name: logstream
+    app.kubernetes.io/part-of: logstream

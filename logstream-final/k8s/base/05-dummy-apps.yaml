@@ -1,0 +1,276 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dummy App 1 — JSON Logger
+# Writes structured JSON logs to the shared log-data PVC at random intervals.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: json-app
+  namespace: logstream
+  labels:
+    app: json-app
+    app.kubernetes.io/name: json-app
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: json-app
+  template:
+    metadata:
+      labels:
+        app: json-app
+    spec:
+      containers:
+        - name: json-app
+          # NOTE: replace with your registry image once pushed, e.g.:
+          #   image: ghcr.io/<your-org>/logstream-json-app:latest
+          image: logstream-json-app:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_FILE
+              value: /logs/json-app.log
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Dummy App 2 — Syslog Logger
+# Writes RFC 3164 syslog-format lines to the shared log-data PVC.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syslog-app
+  namespace: logstream
+  labels:
+    app: syslog-app
+    app.kubernetes.io/name: syslog-app
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syslog-app
+  template:
+    metadata:
+      labels:
+        app: syslog-app
+    spec:
+      containers:
+        - name: syslog-app
+          image: logstream-syslog-app:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_FILE
+              value: /logs/syslog-app.log
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Dummy App 3 — Plain-Text Logger
+# Writes human-readable timestamped lines to the shared log-data PVC.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-app
+  namespace: logstream
+  labels:
+    app: text-app
+    app.kubernetes.io/name: text-app
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: text-app
+  template:
+    metadata:
+      labels:
+        app: text-app
+    spec:
+      containers:
+        - name: text-app
+          image: logstream-text-app:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_FILE
+              value: /logs/text-app.log
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Real-time App 1 — API Gateway
+# Simulates HTTP request routing with latency, status codes, and trace IDs.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: logstream
+  labels:
+    app: api-gateway
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: logstream-api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_FILE
+              value: /logs/api-gateway.log
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 150m
+              memory: 64Mi
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Real-time App 2 — Notification Service
+# Simulates email/SMS/push delivery events, bounces, and retries.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: logstream
+  labels:
+    app: notification-service
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: logstream-notification-service:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_FILE
+              value: /logs/notification-service.log
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Real-time App 3 — Analytics Service
+# Simulates Kafka ingestion, funnel aggregation, and ML scoring pipeline.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: logstream
+  labels:
+    app: analytics-service
+    app.kubernetes.io/name: analytics-service
+    app.kubernetes.io/part-of: logstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+        - name: analytics-service
+          image: logstream-analytics-service:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_FILE
+              value: /logs/analytics-service.log
+          resources:
+            requests:
+              cpu: 15m
+              memory: 48Mi
+            limits:
+              cpu: 200m
+              memory: 96Mi
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          persistentVolumeClaim:
+            claimName: log-data

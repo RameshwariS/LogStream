@@ -77,6 +77,104 @@ services:
     networks:
       - logstream
 
+  # ── Auth Service ──────────────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile
+    container_name: logstream-auth-service
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/auth-service.log
+    networks:
+      - logstream
+
+  # ── Payment Service ───────────────────────────────────────────────────────
+  payment-service:
+    build:
+      context: ./apps/payment-service
+      dockerfile: Dockerfile
+    container_name: logstream-payment-service
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/payment-service.log
+    networks:
+      - logstream
+
+  # ── Order Service ─────────────────────────────────────────────────────────
+  order-service:
+    build:
+      context: ./apps/order-service
+      dockerfile: Dockerfile
+    container_name: logstream-order-service
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/order-service.log
+    networks:
+      - logstream
+
+  # ── Inventory Service ─────────────────────────────────────────────────────
+  inventory-service:
+    build:
+      context: ./apps/inventory-service
+      dockerfile: Dockerfile
+    container_name: logstream-inventory-service
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/inventory-service.log
+    networks:
+      - logstream
+
+  # ── API Gateway Service ───────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    container_name: logstream-api-gateway
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/api-gateway.log
+    networks:
+      - logstream
+
+  # ── Notification Service ──────────────────────────────────────────────────
+  notification-service:
+    build:
+      context: ./apps/notification-service
+      dockerfile: Dockerfile
+    container_name: logstream-notification-service
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/notification-service.log
+    networks:
+      - logstream
+
+  # ── Analytics Service ─────────────────────────────────────────────────────
+  analytics-service:
+    build:
+      context: ./apps/analytics-service
+      dockerfile: Dockerfile
+    container_name: logstream-analytics-service
+    restart: unless-stopped
+    volumes:
+      - log-data:/logs
+    environment:
+      - LOG_FILE=/logs/analytics-service.log
+    networks:
+      - logstream
+
   # ── Backend — Node.js + Socket.io server ────────────────────────────────
   backend:
     build:

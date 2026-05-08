@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: logstream
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmaps.yaml
+  - 02-storage.yaml
+  - 03-loki.yaml
+  - 04-promtail.yaml
+  - 05-dummy-apps.yaml
+  - 06-backend.yaml
+  - 07-frontend.yaml
+  - 08-grafana.yaml
+  - 09-ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: logstream
+  app.kubernetes.io/managed-by: kustomize
